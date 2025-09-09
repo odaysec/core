@@ -88,10 +88,16 @@ export type TokenBalancesControllerGetChainPollingConfigAction = {
   handler: TokenBalancesController['getChainPollingConfig'];
 };
 
+export type TokenBalancesControllerGetDefaultPollingIntervalAction = {
+  type: `TokenBalancesController:getDefaultPollingInterval`;
+  handler: TokenBalancesController['getDefaultPollingInterval'];
+};
+
 export type TokenBalancesControllerActions =
   | TokenBalancesControllerGetStateAction
   | TokenBalancesControllerUpdateChainPollingConfigsAction
-  | TokenBalancesControllerGetChainPollingConfigAction;
+  | TokenBalancesControllerGetChainPollingConfigAction
+  | TokenBalancesControllerGetDefaultPollingIntervalAction;
 
 export type TokenBalancesControllerStateChangeEvent =
   ControllerStateChangeEvent<typeof CONTROLLER, TokenBalancesControllerState>;
@@ -261,15 +267,15 @@ export class TokenBalancesController extends StaticIntervalPollingController<{
     );
 
     // Register action handlers for polling interval control
-    this.messagingSystem.registerActionHandler(
-      `TokenBalancesController:updateChainPollingConfigs`,
-      this.updateChainPollingConfigs.bind(this),
-    );
+          this.messagingSystem.registerActionHandler(
+        `TokenBalancesController:updateChainPollingConfigs`,
+        this.updateChainPollingConfigs.bind(this),
+      );
 
-    this.messagingSystem.registerActionHandler(
-      `TokenBalancesController:getChainPollingConfig`,
-      this.getChainPollingConfig.bind(this),
-    );
+      this.messagingSystem.registerActionHandler(
+        `TokenBalancesController:getChainPollingConfig`,
+        this.getChainPollingConfig.bind(this),
+      );
   }
 
   #chainIdsWithTokens(): ChainIdHex[] {
@@ -462,6 +468,16 @@ export class TokenBalancesController extends StaticIntervalPollingController<{
         interval: this.#defaultInterval,
       }
     );
+  }
+
+  /**
+   * Get the default polling interval for this controller
+   * This is the base interval used for chains without specific configuration
+   * 
+   * @returns The default polling interval in milliseconds
+   */
+  getDefaultPollingInterval(): number {
+    return this.#defaultInterval;
   }
 
   override async _executePoll({ chainIds }: { chainIds: ChainIdHex[] }) {
@@ -801,12 +817,12 @@ export class TokenBalancesController extends StaticIntervalPollingController<{
     this.#intervalPollingTimers.clear();
 
     // Unregister action handlers
-    this.messagingSystem.unregisterActionHandler(
-      `TokenBalancesController:updateChainPollingConfigs`,
-    );
-    this.messagingSystem.unregisterActionHandler(
-      `TokenBalancesController:getChainPollingConfig`,
-    );
+      this.messagingSystem.unregisterActionHandler(
+        `TokenBalancesController:updateChainPollingConfigs`,
+      );
+      this.messagingSystem.unregisterActionHandler(
+        `TokenBalancesController:getChainPollingConfig`,
+      );
 
     super.destroy();
   }
